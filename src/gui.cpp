@@ -64,22 +64,6 @@ void Gui::VideoStateHandling()
 
     ImGui::Begin("Video Handling", nullptr, flags);
     {
-        //ImGuiIO& io = ImGui::GetIO();
-        //io.Fonts->AddFontDefault();
-        //ImTextureID btnTexId = io.Fonts->TexID;
-        //float my_tex_w = (float)io.Fonts->TexWidth;
-        //float my_tex_h = (float)io.Fonts->TexHeight;
-        //ImVec2 size = ImVec2(32.0f, 32.0f);                     
-        //ImVec2 uv0 = ImVec2(0.0f, 0.0f);                        
-        //ImVec2 uv1 = ImVec2(32.0f / my_tex_w, 32.0f / my_tex_h);
-        //ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);         
-        //ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);     
-
-        //ImGui::PushID(" PlayIcon ");
-        //ImGui::ImageButton(btnTexId, size, uv0, uv1, 0, bg_col, tint_col);
-        //ImGui::PopID();
-
-
         ImGui::PushID(" DetectPlayer ");
         ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.7f, 1.f, 0.8f));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.7f, 0.8f, 0.8f));
