@@ -35,27 +35,19 @@ private:
 	void initGLEW();
 	void initOpenGL(int w, int h);
 
-	static void resizeWindow(GLFWwindow* window, int width, int height);
+	void CreateShader();
 
-	void lock_frame_rate(double frame_rate);
+	static void ErrorCallback(int error, const char* description);
+	static void resizeWindow(GLFWwindow* window, int width, int height);
+	static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static void MouseButtonnCallback(GLFWwindow* window, int button, int action, int mods);
+	
+	void LockFrameRate(double frame_rate);
 
 	//GLFWwindow* _window = nullptr;
 	VideoLoader* _video = nullptr;
 	Shader* _shader = nullptr;
 	Model _circle, _arrow;
-
-
-	// Frame counting and limiting
-	int    _frameCount = 0;
-	double _frameStartTime, _frameEndTime, _frameDrawTime;
-
-
-	/////////////////////////////////////////////////////////
-
-	void loadObj(Model& model, char* filePath);
-	void loadShaders(char* vertexShaderLoc, char* fragmentShaderLoc);
-	void CreateShader();
-
 
 
 	glm::vec3 _light = glm::vec3(0.f, 3000.f, 3500.f);
@@ -67,5 +59,9 @@ private:
 	GLuint _viewMatLoc, _projMatLoc, _modelMatLoc, _lightVecLoc, _cameraVecLoc, _colorVecLoc;
 
 	glm::mat4 _modelMatrix, _viewMatrix, _projMatrix;
+
+	// Frame counting and limiting
+	int    _frameCount = 0;
+	double _frameStartTime, _frameEndTime, _frameDrawTime;
 };
 

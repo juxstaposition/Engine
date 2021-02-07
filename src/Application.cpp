@@ -1,84 +1,11 @@
 #include "Application.hpp"
 
-
-OrtographicCamera ortographicCamera(-1.0f, 1.0f, -1.0f, 1.0f);
-
-int lowTh = 90, highTh = 180;
-
-static void error_callback(int error, const char* description) 
-{
-    std::cerr << "Error: " << description << std::endl;
-}
-
-/**
-* Keyboard input handling
-*/
-static void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mods) 
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(_window, GLFW_TRUE);
-    }
-
-
-    int width, height;
-    glfwGetWindowSize(_window, &width, &height);
-
-    const float moveSensitivity = 10.0f;
-    const float moveSensitivityOrto = 0.5f;
-
-    // move camera up
-    if (key == GLFW_KEY_W && (action == GLFW_PRESS || action == GLFW_REPEAT)) 
-    {
-        ortographicCamera.addYPosition(-moveSensitivityOrto);
-    }
-
-    // move camera down
-    if (key == GLFW_KEY_S && (action == GLFW_PRESS || action == GLFW_REPEAT) ) 
-    {
-        ortographicCamera.addYPosition(moveSensitivityOrto);
-    }
-
-    // move camera right
-    if (key == GLFW_KEY_A && (action == GLFW_PRESS || action == GLFW_REPEAT)) 
-    {
-        ortographicCamera.addXPosition(moveSensitivityOrto);
-    }
-
-    // move camera left
-    if (key == GLFW_KEY_D && (action == GLFW_PRESS || action == GLFW_REPEAT)) 
-    {
-        ortographicCamera.addXPosition(-moveSensitivityOrto);
-    }
-
-    // increase camera disctance
-    if (key == GLFW_KEY_E && (action == GLFW_PRESS || action == GLFW_REPEAT)) 
-    {
-        ortographicCamera.setDistance(1.5f);
-    }
-
-    // decrease camera distance
-    if (key == GLFW_KEY_Q && (action == GLFW_PRESS || action == GLFW_REPEAT)) 
-    {
-        ortographicCamera.setDistance(0.1f);
-    }
-
-
-}
-
-
-void mouse_button_callback(GLFWwindow* _window, int button, int action, int mods)
-{
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-    {
-    }
-}
-
 /**
 * @brief Application constructor
 */
 Application::Application()
 {
-    glfwSetErrorCallback(error_callback);
+    glfwSetErrorCallback(ErrorCallback);
 
     initGLFW();
     initGLEW();
@@ -121,7 +48,7 @@ Application::Application()
 
     windowHandler->gui.SetWindowSize((float)windowHandler->width, (float)windowHandler->height);
     // change project matrix based on new dimensions
-    ortographicCamera.resize(0.f, (float)windowHandler->width, 0.f, (float)windowHandler->height);
+    windowHandler->GetCamera()->resize(0.f, (float)windowHandler->width, 0.f, (float)windowHandler->height);
 }
 
 /**
@@ -158,7 +85,82 @@ void Application::resizeWindow(GLFWwindow* window, int width, int height)
     glMatrixMode(GL_MODELVIEW);
 
     win->gui.SetWindowSize((float)win->width, (float)win->height);
+    //win->GetCamera()->resize(0, (float)win->width, 0, (float)win->height);
 }
+
+
+/**
+* @brief GLFW mouse button click callback
+*/
+void Application::MouseButtonnCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    WindowHandler* win = reinterpret_cast<WindowHandler*>(glfwGetWindowUserPointer(window));
+
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+    }
+}
+
+/**
+* @brief GLFW error callback
+*/
+void Application::ErrorCallback(int error, const char* description)
+{
+    std::cerr << "Error: " << description << std::endl;
+}
+
+
+/**
+* @brief Keyboard input handling
+*/
+void Application::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    WindowHandler* win = reinterpret_cast<WindowHandler*>(glfwGetWindowUserPointer(window));
+
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        glfwSetWindowShouldClose(win->GetWindow(), GLFW_TRUE);
+    }
+
+
+    const float moveSensitivityOrto = 5.f;
+
+    // move camera up
+    if (key == GLFW_KEY_W && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        win->GetCamera()->addYPosition(-moveSensitivityOrto);
+    }
+
+    // move camera down
+    if (key == GLFW_KEY_S && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        win->GetCamera()->addYPosition(moveSensitivityOrto);
+    }
+
+    // move camera right
+    if (key == GLFW_KEY_A && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        win->GetCamera()->addXPosition(moveSensitivityOrto);
+    }
+
+    // move camera left
+    if (key == GLFW_KEY_D && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        win->GetCamera()->addXPosition(-moveSensitivityOrto);
+    }
+
+    // increase camera disctance
+    if (key == GLFW_KEY_E && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        win->GetCamera()->setDistance(1.5f);
+    }
+
+    // decrease camera distance
+    if (key == GLFW_KEY_Q && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        win->GetCamera()->setDistance(0.1f);
+    }
+}
+
 
 /**
 * @brief GLFW Initialization
@@ -190,8 +192,8 @@ void Application::initGLFW()
 
     //glfwSetWindowSizeCallback(window, resizeWindow);
     glfwSetFramebufferSizeCallback(window, resizeWindow);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetKeyCallback(window, KeyCallback);
+    glfwSetMouseButtonCallback(window, MouseButtonnCallback);
 }
 
 /**
@@ -252,7 +254,7 @@ void Application::CreateShader()
 * @brief Slows video play speed based on video fps
 * in case of video frames being proccessed too fast 
 */
-void Application::lock_frame_rate(double frame_rate) 
+void Application::LockFrameRate(double frame_rate) 
 {
     // Note: frame_start_time is called first thing in the main loop
     _frameEndTime = glfwGetTime();  // in seconds
@@ -322,8 +324,8 @@ void Application::start()
         _video->drawVideoBackgroundFrame(windowHandler->width, windowHandler->height);
 
         // load projection matrices
-        glm::mat4 proj = ortographicCamera.getProjMatrix();
-        glm::mat4 view = ortographicCamera.getViewMatrix();
+        glm::mat4 proj = windowHandler->GetCamera()->getProjMatrix();
+        glm::mat4 view = windowHandler->GetCamera()->getViewMatrix();
         glm::vec3 camera = glm::vec3(glm::inverse(view) * glm::vec4(0.f, 0.f, 0.f, 1.f));
 
         // object vertical movement, will be joined with matrix initialization
@@ -374,7 +376,7 @@ void Application::start()
         // Perform masking
         _video->drawMaskFrame(windowHandler->gui, windowHandler->width, windowHandler->height, lowTh, highTh);
 
-        lock_frame_rate(_video->getFPS());
+        LockFrameRate(_video->getFPS());
         delta += 5.f;
         if (delta > 360.f)
         {

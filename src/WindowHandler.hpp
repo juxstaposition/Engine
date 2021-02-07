@@ -11,6 +11,7 @@ public:
 	~WindowHandler();
 
 	GLFWwindow* GetWindow() { return _window; }
+	OrtographicCamera* GetCamera() { return _ortographicCamera; }
 
 	int width;
 	int height;
@@ -18,5 +19,6 @@ public:
 
 private:
 	GLFWwindow* _window = nullptr;
+	OrtographicCamera* _ortographicCamera = nullptr;
 };
 
