@@ -14,20 +14,14 @@ Application::Application()
 
     // Create the model shader handler
     _shader = new Shader();
-
-    // Load obj file
-    _circle.loadObjFile("./objects3D/circle2.obj");
-    _arrow.loadObjFile("./objects3D/arrow.obj");
-
-    // Create model in GPU memory
-    _circle.initialzeModel();
-    _arrow.initialzeModel();
-
     // Load the shader file names
     _shader->addFileNames("./src/shaderVertex.glsl", "./src/shaderFragment.glsl");
-
     // Shaders must be created and compiled
     CreateShader();
+
+    // Create objects
+    _circle = new GraphicObject("./objects3D/circle2.obj");
+    _arrow = new GraphicObject("./objects3D/arrow.obj");
 
     // create video handler
     _video = new VideoLoader();
@@ -60,7 +54,13 @@ Application::~Application()
     if (_video != nullptr)
         delete _video;
 
-    if (_video != nullptr)
+    if (_circle != nullptr)
+        delete _circle;
+
+    if (_arrow != nullptr)
+        delete _arrow;
+
+    if (_shader != nullptr)
         delete _shader;
     
     if (windowHandler != nullptr)
@@ -175,7 +175,7 @@ void Application::initGLFW()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
     glfwWindowHint(GLFW_SAMPLES, 8);
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Rendering Engine", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Rendering Engine", NULL, NULL);
     windowHandler = new WindowHandler(window);
     if (!window) {
         std::cerr << "GLFW Window creation error" << std::endl;
@@ -240,12 +240,16 @@ void Application::CreateShader()
     // Compile the shaders and get all the memory locations for our uniform values within the shaders
     _shader->compileShaders();
     glUseProgram(_shader->getShaderProg());
-    _projMatLoc = _shader->getULocation("projMat");
-    _viewMatLoc = _shader->getULocation("viewMat");
-    _modelMatLoc = _shader->getULocation("modelMat");
-    _lightVecLoc = _shader->getULocation("lightPos");
-    _cameraVecLoc = _shader->getULocation("cameraPos");
-    _colorVecLoc = _shader->getULocation("objectColor");
+    _uniform.projMat = _shader->getULocation("projMat");
+    _uniform.viewMat = _shader->getULocation("viewMat");
+    _uniform.modelMat = _shader->getULocation("modelMat");
+    _uniform.cameraVec = _shader->getULocation("cameraPos");
+
+    _uniform.colorVec = _shader->getULocation("objectColor");
+    _uniform.lightVec = _shader->getULocation("lightPos");
+    _uniform.ambient = _shader->getULocation("ambient");
+    _uniform.shininess = _shader->getULocation("shininess");
+    _uniform.specularColor = _shader->getULocation("specularColor");
     glUseProgram(0);
 }
 
@@ -283,6 +287,8 @@ void Application::LockFrameRate(double frame_rate)
 }
 
 
+
+
 /**
 * @brief Application main loop
 */
@@ -297,19 +303,22 @@ void Application::start()
         * glm::scale(glm::mat4(1.0f), glm::vec3(0.8f, 0.8f, 0.8f));
 
     glm::mat4 model2 = glm::translate(glm::mat4(1.0f), glm::vec3((float)windowHandler->width / 2 + 40.f, (float)windowHandler->height / 2 - 40.f, 0.f))
-        * glm::rotate(glm::mat4(1.0f), glm::radians(-110.f), glm::vec3(-0.2f, 1.0f, 0.0f))
+        * glm::rotate(glm::mat4(1.0f), glm::radians(0.f), glm::vec3(-0.2f, 1.0f, 0.0f))
         * glm::scale(glm::mat4(1.0f), glm::vec3(100.f, 100.f, 100.f));
+
+    _circle->createObjectInstance(model1, METALIC);
+    _arrow->createObjectInstance(model2, EMERALD);
 
 
     while (!glfwWindowShouldClose(windowHandler->GetWindow()))
-    {    
+    {
         // load current time and scene
         _frameStartTime = glfwGetTime();
 
         // Start drawing
         // Clear color and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
+
         // update gui
         windowHandler->gui.NewFrame();
 
@@ -337,52 +346,57 @@ void Application::start()
         model1 = glm::translate(glm::mat4(1.0f), glm::vec3(moveX, 0.f, 0.f))
             * glm::rotate(model1, glm::radians(5.f), glm::vec3(0.0f, 1.0f, 0.0f));
 
+        if (windowHandler->gui.GetSliderVal(5) != 0 ||
+            windowHandler->gui.GetSliderVal(6) != 0 ||
+            windowHandler->gui.GetSliderVal(7) != 0)
+        {
+            model2 = glm::rotate(model2, glm::radians(5.f), glm::vec3(
+                (float)windowHandler->gui.GetSliderVal(5) / 10, 
+                (float)windowHandler->gui.GetSliderVal(6) / 10,
+                (float)windowHandler->gui.GetSliderVal(7) / 10) );
+        }
+
+        _light.x = (float)windowHandler->gui.GetSliderVal(1);
+        _light.y = (float)windowHandler->gui.GetSliderVal(2);
+        _light.z = (float)windowHandler->gui.GetSliderVal(3);
+        _light *= 1000;
+        
         // load scene light from gui
-        _light.x = (float)windowHandler->gui.GetValSlider1();
-        _light.y = (float)windowHandler->gui.GetValSlider2();
-        _light.z = (float)windowHandler->gui.GetValSlider3();
-        _light *= 5.f;
+
 
         // Object Drawing
         glUseProgram(_shader->getShaderProg());
 
         // Pass uniform values into shaders
-        glUniformMatrix4fv(_viewMatLoc, 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(_projMatLoc, 1, GL_FALSE, glm::value_ptr(proj));
-        glUniformMatrix4fv(_modelMatLoc, 1, GL_FALSE, glm::value_ptr(model1));
-        glUniform3fv(_lightVecLoc, 1, glm::value_ptr(_light));
-        glUniform3fv(_cameraVecLoc, 1, glm::value_ptr(camera));
-        glUniform3fv(_colorVecLoc, 1, glm::value_ptr(_circleColor));
-        
+        glUniformMatrix4fv(_uniform.viewMat, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(_uniform.projMat, 1, GL_FALSE, glm::value_ptr(proj));
+        glUniform3fv(_uniform.lightVec, 1, glm::value_ptr(_light));
+        glUniform3fv(_uniform.cameraVec, 1, glm::value_ptr(camera));
+
+        // Draw the models
         // show player highlighting if user enables this option
         if (windowHandler->gui.GetPlayerHighliting())
         {
-            // Draw the model
-            _circle.drawModel();
+            setObjectUniforms(_circle, 0);
+            _circle->model.drawModel();
         }
-
-        glUniformMatrix4fv(_modelMatLoc, 1, GL_FALSE, glm::value_ptr(model2));
-        glUniform3fv(_colorVecLoc, 1, glm::value_ptr(_arrowColor));
 
         // show arrow if user enables this option
         if (windowHandler->gui.GetArrow())
         {
-            _arrow.drawModel();
+            setObjectUniforms(_arrow, 0);
+            _arrow->model.drawModel();
         }
         
         // Stop using shader
         glUseProgram(0);
 
         // Perform masking
-        _video->drawMaskFrame(windowHandler->gui, windowHandler->width, windowHandler->height, lowTh, highTh);
+        _video->drawMaskFrame(windowHandler->gui, windowHandler->width, windowHandler->height);
 
         LockFrameRate(_video->getFPS());
         delta += 5.f;
         if (delta > 360.f)
-        {
-            delta = 0.f;
-        }
-        else if (delta < -360.f)
         {
             delta = 0.f;
         }
@@ -404,3 +418,16 @@ void Application::start()
     }
 }
 
+
+
+void Application::setObjectUniforms(GraphicObject* obj, uint8_t instance)
+{
+    if (instance < obj->instancesNum)
+    {
+        glUniformMatrix4fv(_uniform.modelMat, 1, GL_FALSE, glm::value_ptr(obj->instances.at(instance).modelMat));
+        glUniform3fv(_uniform.colorVec, 1, glm::value_ptr(obj->instances.at(instance).material.diffuse));
+        glUniform3fv(_uniform.ambient, 1, glm::value_ptr(obj->instances.at(instance).material.ambient));
+        glUniform3fv(_uniform.specularColor, 1, glm::value_ptr(obj->instances.at(instance).material.specular));
+        glUniform1f(_uniform.shininess, obj->instances.at(instance).material.shininess);
+    }
+}

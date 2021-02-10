@@ -32,7 +32,7 @@ public:
 	bool loadFrame(Gui& gui);
 	void enableMasking();
 	void drawVideoBackgroundFrame(int& windowWidth, int& windowHeight);
-	void drawMaskFrame(Gui& gui, int &windowWidth, int &windowHeight, int& lowTh, int& hightTh);
+	void drawMaskFrame(Gui& gui, int &windowWidth, int &windowHeight);
 
 	void DrawTexture(int& windowWidth, int& windowHeight, GLuint textureId);
 	void DeleteTexture(GLuint& textureId);
@@ -68,3 +68,4 @@ private:
 
 };
 
+ 

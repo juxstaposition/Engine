@@ -19,7 +19,11 @@
 #include "Shader.hpp"
 #include "settings.hpp"
 #include "WindowHandler.hpp"
+#include "GraphicObject.hpp"
+#include "Materials.hpp"
 #include "VideoLoader/Videoloader.hpp"
+
+
 
 class Application
 {
@@ -31,6 +35,21 @@ public:
 	WindowHandler* windowHandler = nullptr;
 
 private:
+
+
+	struct UniformLocations {
+		GLuint viewMat;
+		GLuint projMat;
+		GLuint modelMat;
+		GLuint lightVec;
+		GLuint cameraVec;
+		GLuint colorVec;
+		GLuint ambient;
+		GLuint shininess;
+		GLuint specularColor;
+	};
+
+
 	void initGLFW();
 	void initGLEW();
 	void initOpenGL(int w, int h);
@@ -44,24 +63,24 @@ private:
 	
 	void LockFrameRate(double frame_rate);
 
-	//GLFWwindow* _window = nullptr;
+
+	void setObjectUniforms(GraphicObject* obj, uint8_t instance);
+
+	
 	VideoLoader* _video = nullptr;
 	Shader* _shader = nullptr;
-	Model _circle, _arrow;
+	GraphicObject* _circle = nullptr;
+	GraphicObject* _arrow = nullptr;
 
 
-	glm::vec3 _light = glm::vec3(0.f, 3000.f, 3500.f);
-	glm::vec3 _arrowColor = glm::vec3(0.f, 1.f, 0.f);
-	glm::vec3 _circleColor = glm::vec3(0.83f, 0.83f, 0.83f);
+	glm::vec3 _light = glm::vec3(0.f, 0.f, 0.f);
+	
+	
+	glm::vec3 _circleColor = glm::vec3();
 
-	float cameraRotX, cameraRotY, cameraZoom, sceneLight, rColour, gColour, bColour;
-
-	GLuint _viewMatLoc, _projMatLoc, _modelMatLoc, _lightVecLoc, _cameraVecLoc, _colorVecLoc;
-
-	glm::mat4 _modelMatrix, _viewMatrix, _projMatrix;
+	UniformLocations _uniform;
 
 	// Frame counting and limiting
 	int    _frameCount = 0;
 	double _frameStartTime, _frameEndTime, _frameDrawTime;
 };
-

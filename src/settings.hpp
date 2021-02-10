@@ -1,6 +1,6 @@
 #pragma once
 
-constexpr auto WINDOW_WIDTH = 1800;
+constexpr auto WINDOW_WIDTH = 1920;
 constexpr auto WINDOW_HEIGHT = WINDOW_WIDTH / 3;
 constexpr auto WINDOW_NAME = "3D Rendering Engine";
 

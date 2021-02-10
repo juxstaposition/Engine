@@ -305,26 +305,23 @@ void VideoLoader::DeleteTexture(GLuint& textureId)
 /**
 * @brief Draws mask frame into alpha buffer or shows into the screen for debbuing
 */
-void VideoLoader::drawMaskFrame(Gui& gui, int &windowWidth, int &windowHeight, int& lowTh, int& hightTh)
+void VideoLoader::drawMaskFrame(Gui& gui, int &windowWidth, int &windowHeight)
 {
     // disable extra operations if no objects to be drawn
     if (gui.GetViewType() != gui.ORIGINALVIDEO)
     {
-        if (!_maskCalculated)
-        {
-            // create mask
-            cv::Mat framemasked, mog2mask;
+        // create mask
+        cv::Mat framemasked, mog2mask;
 
-            cv::bitwise_and(_frame, _frame, framemasked, _fieldArea);
-            //_fieldArea
-            MOG2(framemasked, mog2mask);
-            // Create mask texture is video is playing, this doesn't produce a visible result, it just
-            // changes the alpha values in the framebuffer
-            if (!_isPaused || _pauseDetected)
-            {
-                matToTexture(mog2mask, _thresholdTexture, GL_NEAREST, GL_LINEAR, GL_CLAMP);
-                _maskCalculated = true;
-            }
+        cv::bitwise_and(_frame, _frame, framemasked, _fieldArea);
+        //_fieldArea
+        MOG2(framemasked, mog2mask);
+        // Create mask texture is video is playing, this doesn't produce a visible result, it just
+        // changes the alpha values in the framebuffer
+        if (!_isPaused || _pauseDetected)
+        {
+            matToTexture(mog2mask, _thresholdTexture, GL_NEAREST, GL_LINEAR, GL_CLAMP);
+            _maskCalculated = true;
         }
         
         if (gui.GetViewType() == gui.THRESHOLDVIDEO)
@@ -367,14 +364,12 @@ void VideoLoader::drawMaskFrame(Gui& gui, int &windowWidth, int &windowHeight, i
         }
 
         DeleteTexture(_thresholdTexture);
+        _maskCalculated = false;
     }
 
     DeleteTexture( _backgroundTexture);
 
-    if (_isResumed || !_isPaused)
-    {
-        _maskCalculated = false;
-    }
+
 }
 
 

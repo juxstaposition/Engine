@@ -19,6 +19,21 @@ void Gui::Init(GLFWwindow *window)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 
     //ImGui_ImplOpenGL3_Init("#version 450");
+
+    for (int i = 1; i <= sliderSize; i++)
+    {
+        _slider.push_back(0);
+    }
+}
+
+
+int Gui::GetSliderVal(int index) 
+{ 
+    if (index < sliderSize)
+    {
+        return _slider.at(index); 
+    }
+    return -1;
 }
 
 void Gui::CleanUp()
@@ -106,15 +121,19 @@ void Gui::DebugWindowDraw()
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::Begin("Debug Window");                          // Create a window called "Hello, world!" and append into it.
 
-    ImGui::SliderInt("Slider1", &_slider1, 0, 1000);
-    ImGui::SliderInt("Slider2", &_slider2, 0, 1000);
-    ImGui::SliderInt("Slider3", &_slider3, 0, 1000);
+    for (int i = 0; i < sliderSize; i++)
+    {
+        int maxVal = 10;
+        if (i < 3) maxVal = 100;
+        int minVal = 0;
+        if (i < 3) minVal = -100;
+        std::string SliderName = std::string("Slider") + std::to_string(i);
+        ImGui::SliderInt(SliderName.c_str(), &_slider.at(i), minVal, maxVal);
+    }
 
-    ImGui::RadioButton("11", &_blockSize, 11); ImGui::SameLine();
-    ImGui::RadioButton("21", &_blockSize, 21); ImGui::SameLine();
-    ImGui::RadioButton("31", &_blockSize, 31); ImGui::SameLine();
-    ImGui::RadioButton("41", &_blockSize, 41); ImGui::SameLine();
-    ImGui::RadioButton("55", &_blockSize, 55);
+    ImGui::RadioButton("x", &_blockSize, 11); ImGui::SameLine();
+    ImGui::RadioButton("y", &_blockSize, 21); ImGui::SameLine();
+    ImGui::RadioButton("z", &_blockSize, 31);
 
     ImGui::RadioButton("Original Video", &_imgView, 0); ImGui::SameLine();
     ImGui::RadioButton("Threshold", &_imgView, 1); ImGui::SameLine();

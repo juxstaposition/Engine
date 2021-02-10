@@ -1,9 +1,12 @@
 #pragma once
 
 
-#include <GLFW/glfw3.h>
 #include <cstdlib>
+#include <string>
 #include <imgui.h>
+#include <vector>
+
+#include <GLFW/glfw3.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
@@ -20,9 +23,7 @@ public:
 	void CleanUp();
 	void Render();
 
-	int GetValSlider1() { return _slider1; }
-	int GetValSlider2() { return _slider2; }
-	int GetValSlider3() { return _slider3; }
+	int GetSliderVal(int index);
 	int GetViewType() { return _imgView; }
 	int GetBlockSize() { return _blockSize; }
 	void SetWindowSize(float w, float h) { _windowSize.x = w; _windowSize.y = h; }
@@ -43,10 +44,9 @@ private:
 
 
 	// Adjustable values
-	int _slider1 = 25;
-	int _slider2 = 70;
-	int _slider3 = 700;
-	int _imgView = THRESHOLDVIDEO;
+	int sliderSize = 8;
+	std::vector<int> _slider;
+	int _imgView = ORIGINALVIDEO;
 	int _blockSize = 11;
 
 	bool _running = true;
