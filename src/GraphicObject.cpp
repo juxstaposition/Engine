@@ -17,24 +17,21 @@ GraphicObject::~GraphicObject()
 
 void GraphicObject::createObjectInstance(glm::mat4& modelMat, Material material)
 {
-    instancesNum++;
     instances.push_back(ObjectInstance{ modelMat , material });
-
 }
 
 void GraphicObject::deleteObjectInstance(uint8_t instance)
 {
-    if (instance < instancesNum)
+    if (instance < instances.size())
     {
         instances.erase(instances.begin() + instance);
-        instancesNum--;
     }
 }
 
 
-void GraphicObject::setObjectMat(uint8_t instance, glm::mat4& modelMat)
+void GraphicObject::setObjectMat(glm::mat4& modelMat, uint8_t instance)
 {
-    if (instance < instancesNum)
+    if (instance < instances.size())
     {
         instances.at(instance).modelMat = modelMat;
     }

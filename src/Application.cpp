@@ -12,12 +12,11 @@ Application::Application()
     initOpenGL(windowHandler->width, windowHandler->height);
     windowHandler->gui.Init(windowHandler->GetWindow());
 
-    // Create the model shader handler
-    _shader = new Shader();
-    // Load the shader file names
-    _shader->addFileNames("./src/shaderVertex.glsl", "./src/shaderFragment.glsl");
-    // Shaders must be created and compiled
-    CreateShader();
+    // Create and compile shaders
+    _objectShader = new Shader();
+    CreateObjectShader("./src/shaderVertex.glsl", "./src/shaderFragment.glsl");
+    //_depthShader = new Shader();
+    //CreateDepthShader("./src/vsShadowMappingDepth.glsl", "./src/fsShadowMappingDepth.glsl");
 
     // Create objects
     _circle = new GraphicObject("./objects3D/circle2.obj");
@@ -60,8 +59,8 @@ Application::~Application()
     if (_arrow != nullptr)
         delete _arrow;
 
-    if (_shader != nullptr)
-        delete _shader;
+    if (_objectShader != nullptr)
+        delete _objectShader;
     
     if (windowHandler != nullptr)
         delete windowHandler;
@@ -73,7 +72,7 @@ Application::~Application()
 /**
 * @brief Resize Opengl Window Callback for GLFW
 */
-void Application::resizeWindow(GLFWwindow* window, int width, int height)
+void Application::ResizeWindow(GLFWwindow* window, int width, int height)
 {
     WindowHandler* win = reinterpret_cast<WindowHandler*>(glfwGetWindowUserPointer(window));
     win->width = width;
@@ -191,7 +190,7 @@ void Application::initGLFW()
     glfwSwapInterval(1);
 
     //glfwSetWindowSizeCallback(window, resizeWindow);
-    glfwSetFramebufferSizeCallback(window, resizeWindow);
+    glfwSetFramebufferSizeCallback(window, ResizeWindow);
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonnCallback);
 }
@@ -223,6 +222,8 @@ void Application::initOpenGL(int w, int h)
     glLoadIdentity();
     glOrtho(0.0, w, h, 0.0, 0.0, 100.0);
     glMatrixMode(GL_MODELVIEW);
+    
+    glEnable(GL_DEPTH_TEST);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -232,27 +233,70 @@ void Application::initOpenGL(int w, int h)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 }
 
+
+
+
 /**
 * @brief Inicialize uniform location IDs
 */
-void Application::CreateShader()
+void Application::CreateObjectShader(std::string vname, std::string fname)
 {
     // Compile the shaders and get all the memory locations for our uniform values within the shaders
-    _shader->compileShaders();
-    glUseProgram(_shader->getShaderProg());
-    _uniform.projMat = _shader->getULocation("projMat");
-    _uniform.viewMat = _shader->getULocation("viewMat");
-    _uniform.modelMat = _shader->getULocation("modelMat");
-    _uniform.cameraVec = _shader->getULocation("cameraPos");
+    _objectShader->compileShaders(vname, fname);
+    glUseProgram(_objectShader->getShaderProg());
+    _uniform.projMat = _objectShader->getULocation("projMat");
+    _uniform.viewMat = _objectShader->getULocation("viewMat");
+    _uniform.modelMat = _objectShader->getULocation("modelMat");
+    _uniform.cameraVec = _objectShader->getULocation("cameraPos");
 
-    _uniform.colorVec = _shader->getULocation("objectColor");
-    _uniform.lightVec = _shader->getULocation("lightPos");
-    _uniform.ambient = _shader->getULocation("ambient");
-    _uniform.shininess = _shader->getULocation("shininess");
-    _uniform.specularColor = _shader->getULocation("specularColor");
+    _uniform.colorVec = _objectShader->getULocation("objectColor");
+    _uniform.lightVec = _objectShader->getULocation("lightPos");
+    _uniform.ambient = _objectShader->getULocation("ambient");
+    _uniform.shininess = _objectShader->getULocation("shininess");
+    _uniform.specularColor = _objectShader->getULocation("specularColor");
     glUseProgram(0);
 }
 
+/**
+* @brief Inicialize depth uniform location IDs
+*/
+void Application::CreateDepthShader(std::string vname, std::string fname)
+{
+    // Compile the shaders and get all the memory locations for our uniform values within the shaders
+    _depthShader->compileShaders(vname, fname);
+
+    glGenFramebuffers(1, &depthMapFBO);
+    // create depth texture
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, WINDOW_WIDTH, WINDOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    //glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+
+
+    glUseProgram(_depthShader->getShaderProg());
+
+    //simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    _uniform.lightSpaceMat = _objectShader->getULocation("lightSpaceMat");
+    _uniform.modelMat = _objectShader->getULocation("modelMat");
+
+    //glUniform1i(glGetUniformLocation(_depthShader->getShaderProg(),  ), 0);
+    
+
+
+
+    glUseProgram(0);
+}
 
 /**
 * @brief Slows video play speed based on video fps
@@ -298,7 +342,7 @@ void Application::start()
 
     // example of setting position of model by model matrix
     float delta = 0.f;
-    glm::mat4 model1 = glm::translate(glm::mat4(1.0f), glm::vec3((float)windowHandler->width / 2 + 100.f , (float)windowHandler->height /2, 0.f - 50.f))
+    glm::mat4 model1 = glm::translate(glm::mat4(1.0f), glm::vec3((float)windowHandler->width / 2 - 200.f , (float)windowHandler->height /2 - 100.f, 0.f))
         * glm::rotate(glm::mat4(1.0f), glm::radians(-23.f), glm::vec3(1.0f, 0.0f, 0.0f))
         * glm::scale(glm::mat4(1.0f), glm::vec3(0.8f, 0.8f, 0.8f));
 
@@ -306,7 +350,15 @@ void Application::start()
         * glm::rotate(glm::mat4(1.0f), glm::radians(0.f), glm::vec3(-0.2f, 1.0f, 0.0f))
         * glm::scale(glm::mat4(1.0f), glm::vec3(100.f, 100.f, 100.f));
 
-    _circle->createObjectInstance(model1, METALIC);
+    for (float i = 0; i < 11;i++)
+    {
+        for (float j = 0; j < 2;j++)
+        {
+            glm::mat4 tmpMap = glm::translate(model1, glm::vec3( i*100.f ,j*50.f,0.f) );
+            _circle->createObjectInstance(tmpMap, METALIC);
+        }
+    }
+
     _arrow->createObjectInstance(model2, EMERALD);
 
 
@@ -317,6 +369,7 @@ void Application::start()
 
         // Start drawing
         // Clear color and depth buffers
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // update gui
@@ -343,8 +396,16 @@ void Application::start()
         {
             moveX = -1.f;
         }
-        model1 = glm::translate(glm::mat4(1.0f), glm::vec3(moveX, 0.f, 0.f))
-            * glm::rotate(model1, glm::radians(5.f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        for (uint8_t i = 0;i < _circle->instances.size(); i++)
+        {
+            if (i < _circle->instances.size())
+            {
+                glm::mat4 tmpMat = glm::translate(glm::mat4(1.0f), glm::vec3(moveX, 0.f, 0.f))
+                    * glm::rotate(_circle->instances.at(i).modelMat, glm::radians(5.f), glm::vec3(0.0f, 1.0f, 0.0f));
+                _circle->setObjectMat(tmpMat, i);
+            }
+        }
 
         if (windowHandler->gui.GetSliderVal(5) != 0 ||
             windowHandler->gui.GetSliderVal(6) != 0 ||
@@ -354,18 +415,19 @@ void Application::start()
                 (float)windowHandler->gui.GetSliderVal(5) / 10, 
                 (float)windowHandler->gui.GetSliderVal(6) / 10,
                 (float)windowHandler->gui.GetSliderVal(7) / 10) );
+            _arrow->setObjectMat(model2, 0);
         }
 
-        _light.x = (float)windowHandler->gui.GetSliderVal(1);
-        _light.y = (float)windowHandler->gui.GetSliderVal(2);
-        _light.z = (float)windowHandler->gui.GetSliderVal(3);
-        _light *= 1000;
+        _light.x = (float)windowHandler->gui.GetSliderVal(0);
+        _light.y = (float)windowHandler->gui.GetSliderVal(1);
+        _light.z = (float)windowHandler->gui.GetSliderVal(2);
+        _light *= 400;
         
         // load scene light from gui
 
 
         // Object Drawing
-        glUseProgram(_shader->getShaderProg());
+        glUseProgram(_objectShader->getShaderProg());
 
         // Pass uniform values into shaders
         glUniformMatrix4fv(_uniform.viewMat, 1, GL_FALSE, glm::value_ptr(view));
@@ -377,14 +439,19 @@ void Application::start()
         // show player highlighting if user enables this option
         if (windowHandler->gui.GetPlayerHighliting())
         {
-            setObjectUniforms(_circle, 0);
-            _circle->model.drawModel();
+            SetObjectMaterialUniforms(_circle, 0);
+            for (uint8_t i = 0;i < _circle->instances.size(); i++)
+            {
+                SetObjectModelMatUniform(_circle, i);
+                _circle->model.drawModel();
+            }
         }
 
         // show arrow if user enables this option
         if (windowHandler->gui.GetArrow())
         {
-            setObjectUniforms(_arrow, 0);
+            SetObjectMaterialUniforms(_arrow, 0);
+            SetObjectModelMatUniform(_arrow, 0);
             _arrow->model.drawModel();
         }
         
@@ -420,14 +487,22 @@ void Application::start()
 
 
 
-void Application::setObjectUniforms(GraphicObject* obj, uint8_t instance)
+void Application::SetObjectMaterialUniforms(GraphicObject* obj, uint8_t instance)
 {
-    if (instance < obj->instancesNum)
+    if (instance < obj->instances.size())
     {
-        glUniformMatrix4fv(_uniform.modelMat, 1, GL_FALSE, glm::value_ptr(obj->instances.at(instance).modelMat));
         glUniform3fv(_uniform.colorVec, 1, glm::value_ptr(obj->instances.at(instance).material.diffuse));
         glUniform3fv(_uniform.ambient, 1, glm::value_ptr(obj->instances.at(instance).material.ambient));
         glUniform3fv(_uniform.specularColor, 1, glm::value_ptr(obj->instances.at(instance).material.specular));
         glUniform1f(_uniform.shininess, obj->instances.at(instance).material.shininess);
+    }
+}
+
+
+void Application::SetObjectModelMatUniform(GraphicObject* obj, uint8_t instance)
+{
+    if (instance < obj->instances.size())
+    {
+        glUniformMatrix4fv(_uniform.modelMat, 1, GL_FALSE, glm::value_ptr(obj->instances.at(instance).modelMat));
     }
 }

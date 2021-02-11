@@ -67,8 +67,8 @@ void Gui::Render()
 void Gui::VideoStateHandling()
 {
 
-    ImGui::SetNextWindowPos(ImVec2(0, _windowSize.x - 210.f));
-    ImVec2 windowSize(300.f, 210.f);
+    ImGui::SetNextWindowPos(ImVec2(_windowSize.x / 2.f - 200.f, 0.f ));
+    ImVec2 windowSize(500.f, 210.f);
 
     ImGui::SetNextWindowSize(windowSize);
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove
@@ -87,7 +87,7 @@ void Gui::VideoStateHandling()
             _playerHighlighting = !_playerHighlighting;
         }
         ImGui::PopStyleColor(3);
-        ImGui::PopID();
+        ImGui::PopID();ImGui::SameLine();
 
         ImGui::PushID(" DrawArrows ");
         ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.7f, 1.f, 0.8f));
@@ -97,7 +97,7 @@ void Gui::VideoStateHandling()
             _arrowDrawing = !_arrowDrawing;
         }
         ImGui::PopStyleColor(3);
-        ImGui::PopID();
+        ImGui::PopID();ImGui::SameLine();
 
         ImGui::PushID(" Play ");
         ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.7f, 1.f, 0.8f));

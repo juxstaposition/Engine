@@ -24,8 +24,7 @@ VideoLoader::VideoLoader()
     }
 
     _shader = new Shader();
-    _shader->addFileNames("./src/VideoLoader/vsBackgroundTextures.glsl", "./src/VideoLoader/fsBackgroundTextures.glsl");
-    _shader->compileShaders();
+    _shader->compileShaders("./src/VideoLoader/vsBackgroundTextures.glsl", "./src/VideoLoader/fsBackgroundTextures.glsl");
     glUseProgram(_shader->getShaderProg());
     _maskTextureLoc = _shader->getULocation("Texture0");
     _foregroundTextureLoc = _shader->getULocation("Texture1");
@@ -34,11 +33,11 @@ VideoLoader::VideoLoader()
 
 
     float vertices[] = {
-        // positions                                      // texture coords
-         0.0f,  0.0f, 0.0f,                               0.0f, 0.0f, // bottom left
-         (float)getVideoWidth(), 0.0f, 0.0f,              1.0f, 0.0f, // bottom right
-         (float)getVideoWidth(), (float)getVideoHeight(), 0.0f,  1.0f, 1.0f, // top right
-         0.0f,(float)getVideoHeight(), 0.0f,              0.0f, 1.0f  // top left 
+        // positions                                            // texture coords
+         0.0f,  0.0f, 0.0f,                                     0.0f, 0.0f, // bottom left
+         (float)getVideoWidth(), 0.0f, 0.0f,                    1.0f, 0.0f, // bottom right
+         (float)getVideoWidth(), (float)getVideoHeight(), 0.0f, 1.0f, 1.0f, // top right
+         0.0f,(float)getVideoHeight(), 0.0f,                    0.0f, 1.0f  // top left 
     };
     unsigned int indices[] = {
         0, 1, 3, // first triangle

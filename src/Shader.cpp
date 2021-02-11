@@ -5,6 +5,7 @@
  */
 Shader::Shader()
 {
+
 }
 /**
  * @brief Destructor
@@ -23,14 +24,7 @@ GLuint Shader::getShaderProg()
 	return _shaderProgram;
 };
 
-/**
- *  Get file names for shader
- */
-void Shader::addFileNames(std::string vname, std::string fname)
-{
-	_sPFragment = fname;
-	_sPVertex = vname;
-}
+
 
 
 /// This section is based on
@@ -83,11 +77,16 @@ void Shader::loadShaders()
 	}
 }
 
+
+
 /**
  * @brief Shader compilation
  */
-void Shader::compileShaders()
+void Shader::compileShaders(std::string vname, std::string fname)
 {
+	_sPFragment = fname;
+	_sPVertex = vname;
+
 	// Load the files holding the shaders
 	this->loadShaders();
 

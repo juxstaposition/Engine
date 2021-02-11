@@ -35,8 +35,6 @@ public:
 	WindowHandler* windowHandler = nullptr;
 
 private:
-
-
 	struct UniformLocations {
 		GLuint viewMat;
 		GLuint projMat;
@@ -47,39 +45,42 @@ private:
 		GLuint ambient;
 		GLuint shininess;
 		GLuint specularColor;
+		GLuint lightSpaceMat;
 	};
 
 
 	void initGLFW();
 	void initGLEW();
 	void initOpenGL(int w, int h);
+	void initDepthMap();
 
-	void CreateShader();
+	void CreateObjectShader(std::string vname, std::string fname);
+	void CreateDepthShader(std::string vname, std::string fname);
 
 	static void ErrorCallback(int error, const char* description);
-	static void resizeWindow(GLFWwindow* window, int width, int height);
+	static void ResizeWindow(GLFWwindow* window, int width, int height);
 	static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	static void MouseButtonnCallback(GLFWwindow* window, int button, int action, int mods);
 	
 	void LockFrameRate(double frame_rate);
 
 
-	void setObjectUniforms(GraphicObject* obj, uint8_t instance);
-
+	void SetObjectMaterialUniforms(GraphicObject* obj, uint8_t instance);
+	void SetObjectModelMatUniform(GraphicObject* obj, uint8_t instance);
 	
 	VideoLoader* _video = nullptr;
-	Shader* _shader = nullptr;
+	Shader* _objectShader = nullptr;
+	Shader* _depthShader = nullptr;
 	GraphicObject* _circle = nullptr;
 	GraphicObject* _arrow = nullptr;
 
+	UniformLocations _uniform;
 
 	glm::vec3 _light = glm::vec3(0.f, 0.f, 0.f);
 	
-	
-	glm::vec3 _circleColor = glm::vec3();
 
-	UniformLocations _uniform;
-
+	unsigned int depthMapFBO = 0;
+	unsigned int depthMap = 0;
 	// Frame counting and limiting
 	int    _frameCount = 0;
 	double _frameStartTime, _frameEndTime, _frameDrawTime;

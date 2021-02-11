@@ -16,8 +16,7 @@ public:
 	Shader();
 	~Shader();
 
-	void addFileNames(std::string vname, std::string fname);
-	void compileShaders();
+	void compileShaders(std::string vname, std::string fname);
 	GLuint getShaderProg();
 	int getULocation(std::string name);
 

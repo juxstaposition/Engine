@@ -18,7 +18,7 @@ public:
 
 	void createObjectInstance(glm::mat4& modelMat, Material material);
 	void deleteObjectInstance(uint8_t instance);
-	void setObjectMat(uint8_t instance, glm::mat4& modelMat);
+	void setObjectMat(glm::mat4& modelMat, uint8_t instance);
 
 	struct ObjectInstance {
 		glm::mat4 modelMat;
@@ -26,7 +26,6 @@ public:
 	};
 
 	Model model;
-	uint8_t instancesNum = 0;
 	std::vector<ObjectInstance> instances;
 
 };
